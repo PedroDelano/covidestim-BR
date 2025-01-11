@@ -57,7 +57,7 @@ get_ifr_raw <- function(region) {
 #' @param municipality_id The 6-digit IBGE code for the municipality
 #' @return List containing IFR adjustment parameters
 #' @export
-gen_ifr_adjustments <- function(first_date, N_weeks_before, municipality_id) {
+gen_ifr_adjustments <- function(first_date, N_weeks_before, region) {
 
   logger::log_info("Using custom IFR function for Brazil")
 
