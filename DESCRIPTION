@@ -1,4 +1,4 @@
-Package: covidestim_br
+Package: covidestim.br
 Title: Real-time Bayesian forcasting of R_t
 Version: 0.1.1.0000
 Authors@R: 
