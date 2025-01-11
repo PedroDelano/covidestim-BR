@@ -311,13 +311,15 @@ runOptimizer.covidestim <- function(cc,
                                     iter    = 2000,
                                     timeout = 60,
                                     ...) {
-  
+
   # Require that case and death data be entered
   if (is.null(cc$config$obs_cas))
     stop("Case data was not entered. See `?input_cases`.")
   
   if (is.null(cc$config$obs_die))
     stop("Deaths data was not entered. See `?input_deaths`.")
+
+  logger::log_info("Hey babe boy, I'm here")
   
   # Set the RNG seed to the seed specified in the `covidestim_config` object.
   # Then, use that seed to create `tries` random integers, each of which will

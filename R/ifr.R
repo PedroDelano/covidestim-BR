@@ -61,8 +61,14 @@ gen_ifr_adjustments <- function(first_date, N_weeks_before, region) {
 
   logger::log_info("Using custom IFR function for Brazil")
 
+  logger::log_info("[gen_ifr_adjustments] Argument: first_date", "Value:", first_date)
+  logger::log_info("[gen_ifr_adjustments] Argument: N_weeks_before", "Value:", N_weeks_before)
+  logger::log_info("[gen_ifr_adjustments] Argument: region", "Value:", region)
+
   # Start date for IFR calculations
   ifr_adj_start <- first_date - lubridate::weeks(N_weeks_before)
+
+  logger::log_info("[gen_ifr_adjustments] Argument: ifr_adj_start", "Value:", ifr_adj_start)
   
   # Get municipality-specific factors (age structure, healthcare access, etc)
   # TODO: Replace with actual Brazilian demographic/healthcare data
