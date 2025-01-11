@@ -128,63 +128,33 @@ covidestim <- function(nweeks,
   structure(properties, class='covidestim')
 }
 
-#' Population estimates for US states and counties
-#'
-#' Returns 2019 census estimate of state or county population.
-#'
-#' @param region A string with the state name, or the FIPS code
-#'
-#' @return State/county population as a numeric, or an error
-#'
-#' @examples
-#' get_pop('Connecticut')
-#' get_pop('09009')
-#'
 #' @export
-get_pop <- function(region) {
-  found <- dplyr::filter(pop_state, state == region)
-
-  if (nrow(found) == 0)
-    found <- dplyr::filter(pop_county, fips == region)
-
-  if (nrow(found) == 0)
-    stop(glue::glue("Could not find population data for region {region}!"))
-
-  if (nrow(found) > 1)
-    stop(glue::glue("Found more than set of population data for region {region}!"))
-
-  found$pop
+#' Get population for Brazilian municipalities
+#' @param municipality_id The 6-digit IBGE code for the municipality
+#' @return Population size as numeric
+#' @export
+get_pop <- function(municipality_id) {
+  # TODO: Replace this with actual Brazilian census data lookup
+  # For now returning a simple lookup or warning
+  warning("Using placeholder population data. Replace with actual Brazilian census data.")
+  return (100000)
 }
 
-#' Immunity and cumulative infections (fraction) estimates for US states and counties 
-#'
-#' Returns December 1, 2021 covidestim estimates of state or county effective protection
-#' and fraction of the population ever infected.
-#'
-#' @param region A string with the state name, or the FIPS code
-#'
-#' @return State/county population as a numeric, or an error
-#'
-#' @examples
-#' get_imm_init('Connecticut')
-#' get_imm_init('09009')
-#'
+#' Get initial immunity parameters for Brazilian municipalities
+#' @param municipality_id The 6-digit IBGE code for the municipality
+#' @return List containing start_p_imm and cum_p_inf_init values
 #' @export
-get_imm_init <- function(region) {
-  found <- dplyr::filter(imm_state, location == region)
+get_imm_init <- function(municipality_id) {
+  # TODO: Replace with actual seroprevalence data if available
+  # For now using conservative estimates
 
-  if (nrow(found) == 0)
-    found <- dplyr::filter(imm_county, location == region)
+  logger::log_info("Using custom IMM function for Brazil")
 
-  if (nrow(found) == 0)
-    stop(glue::glue("Could not find immunity data for region {region}!"))
-
-  if (nrow(found) > 1)
-    stop(glue::glue("Found more than set of immunity data for region {region}!"))
-
-  found
+  list(
+    start_p_imm = 0.1,      # Initial immunity estimate
+    cum_p_inf_init = 0.1    # Initial cumulative infection estimate
+  )
 }
-
 
 #' @export
 run <- function(...) UseMethod('run')

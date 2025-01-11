@@ -51,58 +51,40 @@ get_ifr_raw <- function(region) {
   found_state * found_county$ifr_OR
 }
 
-gen_ifr_adjustments <- function(first_date, N_weeks_before, region){
-                                # omicron = FALSE) {
-  # The next several lines add state/county-specific IFR data to the
-  # configuration passed to Stan. These lines have to be defined inside 
-  # this function because they need to know the start date of the input data,
-  # which is not known until the user adds `input_cases()/input_deaths()` to
-  # the model configuration.
-  ymd <- lubridate::ymd
+#' Generate IFR adjustments for Brazilian municipalities
+#' @param first_date The start date of the analysis period
+#' @param N_weeks_before Number of weeks before first date to model
+#' @param municipality_id The 6-digit IBGE code for the municipality
+#' @return List containing IFR adjustment parameters
+#' @export
+gen_ifr_adjustments <- function(first_date, N_weeks_before, municipality_id) {
+
+  logger::log_info("Using custom IFR function for Brazil")
+
+  # Start date for IFR calculations
+  ifr_adj_start <- first_date - lubridate::weeks(N_weeks_before)
   
-  ifr_adj_start <- first_date - 
-    lubridate::weeks(N_weeks_before)  # Burn-in period
+  # Get municipality-specific factors (age structure, healthcare access, etc)
+  # TODO: Replace with actual Brazilian demographic/healthcare data
+  ifr_adj_fixed <- 1.0  # Placeholder - should be calculated based on municipality characteristics
   
-  # time-invariant IFR adjustment accounting for state- and county-level
-  # factors, representing an odds-ratio applied to the national average IFR
-  ifr_adj_fixed <- get_ifr_raw(region) 
-  
-  # reduction in IFR over the course of 2020 due to improvements in care.
-  # Operationalized as 1 minus a Normal CDF, with max slope in June 1, 
-  # and sd = 45 days. Vector created from ifr_adj_start to end 2022.
+  # Generate time-based IFR adjustment vector
+  # This models potential improvements in treatment over time
   ifr_adj_df <- tibble::tibble(
-    date  = seq.Date(ifr_adj_start, ymd('2024-12-31'), by = '1 week'),
+    date = seq.Date(ifr_adj_start, lubridate::ymd('2024-12-31'), by = '1 week'),
     value = 1 - pnorm(
-      as.numeric(seq.Date(ifr_adj_start, ymd("2024-12-31"), by = '1 week')),
-      ymd("2020-5-1"),
+      as.numeric(seq.Date(ifr_adj_start, lubridate::ymd("2024-12-31"), by = '1 week')),
+      lubridate::ymd("2021-1-1"),  # Adjust this date based on Brazilian context
       21
     )
   )
-  # reduction in IFR over the course of December 2021 due to Omicron.
-  # Operationalized as a Normal CDF, with max slope on December 20, 2021, 
-  # and sd = 14 days. Vector created from ifr_adj_start to end 2022.
-  # ifr_omi_df <- tibble::tibble(
-  #   date  = seq.Date(ifr_adj_start, ymd('2022-12-31'), by = '1 week'),
-  #   value = pnorm(
-  #     as.numeric(seq.Date(ifr_adj_start, ymd("2022-12-31"), by = '1 week')),
-  #     ymd("2021-12-20"),
-  #     14
-  #   )
-  # )
   
+  # Create adjustment vector
   ifr_adj <- dplyr::pull(ifr_adj_df, value)
-  # ifr_omi <- dplyr::pull(ifr_omi_df, value)
-  
-  # if(omicron == FALSE){
-  #   ifr_omi <- rep(0, length(ifr_omi))
-  # }
   
   list(
     ifr_adj_fixed = ifr_adj_fixed,
-    ifr_adj       = ifr_adj,
-    # ifr_omi       = ifr_omi,
-    N_ifr_adj     = length(ifr_adj)
+    ifr_adj = ifr_adj,
+    N_ifr_adj = length(ifr_adj)
   )
 }
-
-
