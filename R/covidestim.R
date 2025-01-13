@@ -319,13 +319,15 @@ runOptimizer.covidestim <- function(cc,
   if (is.null(cc$config$obs_die))
     stop("Deaths data was not entered. See `?input_deaths`.")
 
-  logger::log_info("Hey babe boy, I'm here")
+  logger::log_info("Starting runOptimizer.covidestim")
   
   # Set the RNG seed to the seed specified in the `covidestim_config` object.
   # Then, use that seed to create `tries` random integers, each of which will
   # be used as the seed value for an instance of `rstan::optimizing`.
   set.seed(cc$seed)
   seeds <- sample.int(.Machine$integer.max, tries)
+
+  logger::log_info("Seeds generated")
 
   runOptimizerWithSeed <- function(seed, i) {
     startTime <- Sys.time()
@@ -369,6 +371,8 @@ runOptimizer.covidestim <- function(cc,
   # By default, use a sequential mapping function
   map_fun <- purrr::imap
 
+  logger::log_info("Starting runOptimizerWithSeedInTime")
+
   # Set up multicore execution for the `furrr::future_imap` call.
   # Replace the mapping function with a parallel mapping function that has the
   # same functional form, but executes in parallel.
@@ -377,16 +381,62 @@ runOptimizer.covidestim <- function(cc,
     map_fun <- furrr::future_imap
   }
 
-  # Run the optimizer on all the different seeds
+  # # Run the optimizer on all the different seeds
+  # results <- map_fun(
+  #   seeds,
+  #   runOptimizerWithSeedInTime,
+  #   timeout = timeout
+  # )
+
+  # # Change the execution plan back to sequential
+  # if (cores > 1)
+  #   future::plan(future::sequential)
+
   results <- map_fun(
     seeds,
     runOptimizerWithSeedInTime,
     timeout = timeout
   )
 
-  # Change the execution plan back to sequential
-  if (cores > 1)
-    future::plan(future::sequential)
+  # Add debugging
+  logger::log_info("Results from optimization attempts:")
+  logger::log_info(sprintf("Number of results: %d", length(results)))
+  
+  # Filter NULL results first
+  non_null_results <- purrr::discard(results, is.null)
+  logger::log_info(sprintf("Number of non-null results: %d", length(non_null_results)))
+  
+  # Check if we have any valid results
+  if (length(non_null_results) == 0) {
+    rlang::abort(
+      "all_runs_were_bad_error",
+      message = "All BFGS runs timed out or failed!",
+      path = "R/covidestim.R"
+    )
+  }
+  
+  # Check return codes and filter successful runs
+  successful_results <- purrr::keep(non_null_results, function(x) {
+    if (!is.null(x$return_code)) {
+      return(x$return_code == 0)
+    }
+    return(FALSE)
+  })
+  
+  logger::log_info(sprintf("Number of successful results: %d", length(successful_results)))
+
+  if (length(successful_results) == 0) {
+    rlang::abort(
+      "all_runs_failed_error",
+      message = "All BFGS runs returned non-zero exit codes!",
+      path = "R/covidestim.R"
+    )
+  }
+
+  # Extract optimization values
+  opt_vals <- purrr::map_dbl(successful_results, 'value')
+  
+  logger::log_info("Finished runOptimizerWithSeedInTime")
 
   # Return code of 0 indicates success for `rstan::optimizing`. This is just
   # a standard UNIX return code b/c `rstan::optimizing` calls into CmdStan.
