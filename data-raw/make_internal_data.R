@@ -12,6 +12,6 @@ ifr_county <- ifrs$county
 
 usethis::use_data(
   ifr_state, ifr_county, ct_data, pop_state, pop_county,
-  imm_county, imm_state,
+  imm_county, imm_state, POPULATION_DATASET
   internal = TRUE, overwrite = TRUE
 )

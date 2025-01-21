@@ -134,10 +134,26 @@ covidestim <- function(nweeks,
 #' @return Population size as numeric
 #' @export
 get_pop <- function(municipality_id) {
-  # TODO: Replace this with actual Brazilian census data lookup
-  # For now returning a simple lookup or warning
-  warning("Using placeholder population data. Replace with actual Brazilian census data.")
-  return (100000)
+
+    id_uf <- substr(municipality_id, 1, 2)
+    id_municipio <- substr(municipality_id, 3, 7)
+
+    if (!id_uf %in% POPULATION_DATASET$`COD. UF`) {
+        stop(paste0("ID ", id_municipio," not found in population dataset"))
+    } else if (!id_municipio %in% POPULATION_DATASET$`COD. MUNIC`) {
+        stop(paste0("ID ", id_municipio," not found in population dataset"))
+    }
+
+    pop <- POPULATION_DATASET %>%
+        filter(`COD. MUNIC` == id_municipio) %>%
+        filter(`COD. UF` == id_uf) %>%
+        select(`POPULAÇÃO ESTIMADA`)
+
+    # to integer
+    pop <- as.integer(pop)
+
+    return(pop)
+
 }
 
 #' Get initial immunity parameters for Brazilian municipalities
