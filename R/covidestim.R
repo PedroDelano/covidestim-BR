@@ -361,11 +361,11 @@ runOptimizer.covidestim <- function(cc,
 
     endTime <- Sys.time()
 
-    message(glue::glue(
-      'Finished try #{i} in {dt} with exit code {ec}',
-      dt = prettyunits::pretty_dt(endTime - startTime),
-      ec = result$return_code
-    ));
+    # message(glue::glue(
+    #   'Finished try #{i} in {dt} with exit code {ec}',
+    #   dt = prettyunits::pretty_dt(endTime - startTime),
+    #   ec = result$return_code
+    # ));
 
     result
   }
